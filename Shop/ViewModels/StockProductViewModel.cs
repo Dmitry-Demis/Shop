@@ -5,6 +5,8 @@ using Shop.DAL.Models;
 using Shop.DAL.Models.Builders;
 using Shop.DAL.Repositories;
 using Shop.ViewModels.Services;
+using Shop.ViewModels.Wrappers;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -17,223 +19,163 @@ namespace Shop.ViewModels
     {
         private readonly IRepository<Store> _storeRepository;
         private readonly IRepository<Product> _productRepository;
-        private readonly IUserDialogService _userDialogService;
+        private readonly IUserDialogService _userDialog;
 
         public StockProductViewModel(
             IRepository<Store> storeRepository,
             IRepository<Product> productRepository,
-            IUserDialogService userDialogService)
+            IUserDialogService userDialog)
         {
-            _storeRepository = storeRepository;
-            _productRepository = productRepository;
-            _userDialogService = userDialogService;
+            _storeRepository = storeRepository ?? throw new ArgumentNullException(nameof(storeRepository));
+            _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+            _userDialog = userDialog ?? throw new ArgumentNullException(nameof(userDialog));
 
-            _ = LoadDataAsync();
+            StoreInventory = new StoreInventoryWrapper(new StoreInventory());            // Инициализация коллекций
+            LoadStores();
+            LoadProducts();
         }
 
-        private string _title = "Завезти товары в магазин";
-        public string Title
-        {
-            get => _title;
-            set => Set(ref _title, value);
-        }
+        #region Properties
 
-        private ObservableCollection<string> _uniqueStoreNames = new();
-        public ObservableCollection<string> UniqueStoreNames
-        {
-            get => _uniqueStoreNames;
-            set => Set(ref _uniqueStoreNames, value);
-        }
+        // Свойства для привязки данных
+        public ObservableCollection<StoreWrapper> Stores { get; private set; } = new ObservableCollection<StoreWrapper>();
+        public ObservableCollection<ProductWrapper> Products { get; private set; } = new ObservableCollection<ProductWrapper>();
 
-        private string? _selectedStoreName;
-        public string? SelectedStoreName
-        {
-            get => _selectedStoreName;
-            set
-            {
-                if (Set(ref _selectedStoreName, value))
-                {
-                    UpdateAddresses();
-                }
-            }
-        }
-
-        private ObservableCollection<string> _addresses = new();
-        public ObservableCollection<string> Addresses
-        {
-            get => _addresses;
-            set => Set(ref _addresses, value);
-        }
-
-        private string? _selectedAddress;
-        public string? SelectedAddress
-        {
-            get => _selectedAddress;
-            set
-            {
-                if (Set(ref _selectedAddress, value))
-                {
-                    UpdateSelectedStore();
-                }
-            }
-        }
-
-        private ObservableCollection<Product> _products = new();
-        public ObservableCollection<Product> Products
-        {
-            get => _products;
-            set => Set(ref _products, value);
-        }
-
-        private Product? _selectedProduct;
-        public Product? SelectedProduct
-        {
-            get => _selectedProduct;
-            set => Set(ref _selectedProduct, value);
-        }
-
-        private int _quantity;
-        public int Quantity
-        {
-            get => _quantity;
-            set => Set(ref _quantity, value);
-        }
-
-        private decimal _price;
-        public decimal Price
-        {
-            get => _price;
-            set => Set(ref _price, value);
-        }
-
-        private Store? _selectedStore;
-        public Store? SelectedStore
+        private StoreWrapper _selectedStore;
+        public StoreWrapper SelectedStore
         {
             get => _selectedStore;
             set => Set(ref _selectedStore, value);
         }
 
-        private ICommand? _addNewProductCommand;
-        public ICommand AddNewProductCommand => _addNewProductCommand ??= new LambdaCommandAsync(OnAddNewProductExecutedAsync, CanAddNewProductExecute);
-
-        private bool CanAddNewProductExecute() =>
-            SelectedStore != null && SelectedProduct != null && Quantity > 0 && Price > 0;
-
-        private async Task OnAddNewProductExecutedAsync()
+        private ProductWrapper _selectedProduct;
+        public ProductWrapper SelectedProduct
         {
-            // Проверка, что все обязательные данные выбраны
-            if (SelectedStore == null || SelectedProduct == null || string.IsNullOrWhiteSpace(SelectedAddress))
-            {
-                _userDialogService.ShowError("Не выбраны все необходимые данные: магазин, адрес или товар.");
-                return;
-            }
-
-            try
-            {
-                // Загружаем актуальные данные из репозитория для предотвращения рассинхронизации
-                var store = await _storeRepository.Items
-                    .Include(s => s.StoreInventories)
-                    .FirstOrDefaultAsync(s => s.Id == SelectedStore.Id);
-
-                if (store == null)
-                {
-                    _userDialogService.ShowError("Выбранный магазин не найден в базе данных.");
-                    return;
-                }
-
-                // Проверяем наличие товара в магазине
-                var existingInventory = store.StoreInventories
-                    .FirstOrDefault(si => si.ProductId == SelectedProduct.Id);
-
-                if (existingInventory != null)
-                {
-                    // Обновляем количество и цену
-                    existingInventory.Quantity += Quantity;
-                    existingInventory.Price = Price;
-                    // Уведомляем об успешной операции
-                    _userDialogService.ShowInformation("Товар успешно обновлён в магазине.");
-                }
-                else
-                {
-                    // Создаём новый StoreInventory
-                    var newInventory = new StoreInventoryBuilder()
-                        .SetStore(store)
-                        .SetProduct(SelectedProduct)
-                        .SetQuantity(Quantity)
-                        .SetPrice(Price)
-                        .Build();
-
-                    store.StoreInventories.Add(newInventory);
-                    // Уведомляем об успешной операции
-                    _userDialogService.ShowInformation("Товар успешно добавлен");
-                }
-
-                // Сохраняем изменения
-                await _storeRepository.UpdateAsync(store);
-                // Сбрасываем поля
-                Quantity = 0;
-                Price = 0;
-                SelectedProduct = null;
-                _userDialogService.Close();
-            }
-            catch (Exception ex)
-            {
-                // Логируем и отображаем ошибку
-                _userDialogService.ShowError($"Ошибка при добавлении товара: {ex.Message}");
-            }
+            get => _selectedProduct;
+            set => Set(ref _selectedProduct, value);
         }
 
+        public StoreInventoryWrapper _storeInventory;
 
-        private async Task LoadDataAsync()
+        public StoreInventoryWrapper StoreInventory
         {
-            var stores = await _storeRepository.Items.ToListAsync();
-            Stores = new ObservableCollection<Store>(stores);
+            get => _storeInventory;
+            set => Set(ref _storeInventory, value);
+        }
+        #endregion
 
-            // Заполняем уникальные названия магазинов
-            UniqueStoreNames = new ObservableCollection<string>(
-                stores.Select(s => s.Name).Distinct()
-            );
+        #region Commands
 
-            // Выбираем первый элемент по умолчанию
-            SelectedStoreName = UniqueStoreNames.FirstOrDefault();
+        private ICommand? _addNewProductCommand;
+        public ICommand AddNewProductCommand => _addNewProductCommand ??= new LambdaCommandAsync(OnAddOrUpdateProductExecutedAsync, CanAddNewProductExecute);
 
+        private bool CanAddNewProductExecute() =>
+            SelectedStore != null && SelectedProduct != null && StoreInventory.Quantity > 0 && StoreInventory.Price > 0;
+
+        #endregion
+
+        #region Methods
+
+        // Метод загрузки магазинов с включением их инвентаря
+        private async void LoadStores()
+        {
+            // Загружаем магазины с их инвентарём через Include()
+            var stores = await _storeRepository.Items
+                .Include(s => s.StoreInventories) // Включаем коллекцию StoreInventories
+                .ThenInclude(si => si.Product) // Включаем продукты, если нужно
+                .ToListAsync();
+
+            Stores.Clear();
+            foreach (var store in stores)
+            {
+                Stores.Add(new StoreWrapper(store));
+            }
+
+            // Устанавливаем первый магазин как выбранный
+            SelectedStore = Stores.FirstOrDefault();
+        }
+
+        // Метод загрузки продуктов
+        private async void LoadProducts()
+        {
             var products = await _productRepository.Items.ToListAsync();
-            Products = new ObservableCollection<Product>(products);
+            Products.Clear();
+            foreach (var product in products)
+            {
+                Products.Add(new ProductWrapper(product));
+            }
 
-            // Устанавливаем первый продукт по умолчанию
+            // Устанавливаем первый продукт как выбранный
             SelectedProduct = Products.FirstOrDefault();
         }
 
-        private void UpdateAddresses()
-        {
-            Addresses.Clear();
-            if (string.IsNullOrWhiteSpace(SelectedStoreName)) return;
 
-            var relevantStores = Stores.Where(s => s.Name == SelectedStoreName).ToList();
-            foreach (var store in relevantStores)
+        private async Task OnAddOrUpdateProductExecutedAsync()
+        {
+            try
             {
-                Addresses.Add(store.Address);
+                // Проверка, выбран ли товар и магазин
+                if (SelectedProduct == null || SelectedStore == null)
+                {
+                    _userDialog.ShowError("Не выбран товар или магазин.", "Ошибка");
+                    return; // Не выбраны товар или магазин
+                }
+
+                // Разворачиваем обёртки для получения реальных объектов Store и Product
+                var store = SelectedStore.Unwrap();
+                var product = SelectedProduct.Unwrap();
+
+                // Проверяем, существует ли уже запись для этого товара в этом магазине
+                var existingStoreInventory = store.StoreInventories
+                    .FirstOrDefault(si => si.ProductId == product.Id);
+
+                if (existingStoreInventory != null)
+                {
+                    // Если товар уже есть в магазине, обновляем количество и цену
+                    existingStoreInventory.Quantity += StoreInventory.Quantity;
+                    existingStoreInventory.Price = StoreInventory.Price;
+
+                    // Обновляем StoreInventory через репозиторий
+                    await _storeRepository.UpdateAsync(store);
+                }
+                else
+                {
+                    // Если товара нет в магазине, создаём новый StoreInventory через Builder
+                    var storeInventory = new StoreInventoryBuilder()
+                        .SetStore(store) // Устанавливаем магазин
+                        .SetProduct(product) // Устанавливаем продукт
+                        .SetQuantity(StoreInventory.Quantity) // Устанавливаем количество
+                        .SetPrice(StoreInventory.Price) // Устанавливаем цену
+                        .Build(); // Строим объект StoreInventory
+
+                    // Добавляем новый StoreInventory в коллекцию StoreInventories
+                    store.StoreInventories.Add(storeInventory);
+
+                    // Сохраняем изменения в репозитории
+                    await _storeRepository.UpdateAsync(store);
+                }
+
+                // Сброс полей после добавления/обновления товара
+                StoreInventory.Quantity = 0;
+                StoreInventory.Price = 0;
+                SelectedProduct = null;
+
+                _userDialog.ShowInformation("Товар успешно добавлен/обновлен в магазине.");
+                _userDialog.Close();
+
+                // Перезагружаем магазины и продукты
+                LoadStores();
+                LoadProducts();
             }
-
-            // Выбираем первый адрес по умолчанию
-            SelectedAddress = Addresses.FirstOrDefault();
+            catch (Exception ex)
+            {
+                _userDialog.ShowError($"Ошибка при добавлении/обновлении товара: {ex.Message}", "Ошибка");
+            }
         }
 
 
-        private void UpdateSelectedStore()
-        {
-            if (string.IsNullOrWhiteSpace(SelectedAddress)) return;
 
-            SelectedStore = Stores.FirstOrDefault(
-                s => s.Name == SelectedStoreName && s.Address == SelectedAddress
-            );
-        }
 
-        private ObservableCollection<Store> _stores = new();
-        public ObservableCollection<Store> Stores
-        {
-            get => _stores;
-            set => Set(ref _stores, value);
-        }
+        #endregion
     }
 }

@@ -10,7 +10,7 @@ using Shop.DAL.DataContext;
 namespace Shop.Migrations
 {
     [DbContext(typeof(StoreDbContext))]
-    [Migration("20241121210521_Init")]
+    [Migration("20241122165200_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -47,11 +47,18 @@ namespace Shop.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.ToTable("Stores");
                 });

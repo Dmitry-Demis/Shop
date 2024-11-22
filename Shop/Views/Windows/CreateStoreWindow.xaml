@@ -13,6 +13,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -22,24 +23,20 @@
         <!-- Название магазина -->
         <TextBlock Text="Название Магазина:" VerticalAlignment="Center" Margin="5" Grid.Row="0" Grid.Column="0"/>
 
-        <!-- Комбо-бокс с возможностью редактирования, привязан к UniqueStoreNames -->
-        <ComboBox Name="StoreComboBox" 
-                  IsEditable="True" 
-                  Margin="5" 
-                  Grid.Row="0" 
-                  Grid.Column="1"
-                  Text="{Binding StoreName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                  ItemsSource="{Binding UniqueStoreNames}" 
-                  SelectedItem="{Binding StoreName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-        </ComboBox>
+        <!-- Текстовое поле для названия магазина (только для чтения) -->
+        <TextBox Text="{Binding SelectedStore.Name, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Margin="5" Grid.Row="0" Grid.Column="1"/>
 
         <!-- Адрес магазина -->
         <TextBlock Text="Адрес Магазина:" VerticalAlignment="Center" Margin="5" Grid.Row="1" Grid.Column="0"/>
-        <TextBox Text="{Binding StoreAddress, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+        <TextBox Text="{Binding SelectedStore.Address, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
                  Margin="5" Grid.Row="1" Grid.Column="1"/>
+
+        <!-- Уникальный код магазина (только для чтения) -->
+        <TextBlock Text="Уникальный код:" VerticalAlignment="Center" Margin="5" Grid.Row="2" Grid.Column="0"/>
+        <TextBlock Text="{Binding SelectedStore.Code}" Margin="5" Grid.Row="2" Grid.Column="1" IsHitTestVisible="False"/>
 
         <!-- Кнопка для создания магазина -->
         <Button Content="Создать Магазин" Command="{Binding CreateStoreCommand}" 
-                Margin="5" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" />
+                Margin="5" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"/>
     </Grid>
 </Window>

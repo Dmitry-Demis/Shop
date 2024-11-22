@@ -1,6 +1,6 @@
 ﻿namespace Shop.DAL.Models.Builders
 {
-    public class StoreInventoryBuilder
+    public class StoreInventoryBuilder : IBuilder<StoreInventory>
     {
         private readonly StoreInventory _storeInventory = new ();
         public StoreInventoryBuilder SetStore(Store store)

@@ -30,7 +30,8 @@ namespace Shop.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Address = table.Column<string>(type: "TEXT", nullable: false)
+                    Address = table.Column<string>(type: "TEXT", nullable: false),
+                    Code = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -73,6 +74,12 @@ namespace Shop.Migrations
                 name: "IX_StoreInventories_ProductId",
                 table: "StoreInventories",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Stores_Code",
+                table: "Stores",
+                column: "Code",
+                unique: true);
         }
 
         /// <inheritdoc />

@@ -1,12 +1,11 @@
 ﻿using MathCore.ViewModels;
 using MathCore.WPF.Commands;
-using Microsoft.EntityFrameworkCore;
 using Shop.DAL.Models;
 using Shop.DAL.Models.Builders;
 using Shop.DAL.Repositories;
 using Shop.ViewModels.Services;
+using Shop.ViewModels.Wrappers;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +13,7 @@ using System.Windows.Input;
 
 namespace Shop.ViewModels
 {
+
     public class CreateStoreViewModel : ViewModel
     {
         private readonly IRepository<Store> _storeRepository;
@@ -25,13 +25,10 @@ namespace Shop.ViewModels
         {
             _storeRepository = storeRepository ?? throw new ArgumentNullException(nameof(storeRepository));
             _userDialog = userDialog ?? throw new ArgumentNullException(nameof(userDialog));
-
-            Stores = new ObservableCollection<Store>();
-            UniqueStoreNames = new ObservableCollection<string>();
-
-            _ = LoadStoresAsync();
+            SelectedStore = new StoreWrapper(new Store());
         }
 
+        // Свойства для привязки в UI
         private string _title = "Создать магазин";
         public string Title
         {
@@ -39,94 +36,47 @@ namespace Shop.ViewModels
             set => Set(ref _title, value);
         }
 
-        private string _storeName = null!;
-        public string StoreName
+        private StoreWrapper _selectedStore;
+        public StoreWrapper SelectedStore
         {
-            get => _storeName;
-            set => Set(ref _storeName, value);
-        }
-
-        private string _storeAddress = null!;
-        public string StoreAddress
-        {
-            get => _storeAddress;
-            set => Set(ref _storeAddress, value);
-        }
-
-        private ObservableCollection<Store> _stores;
-        public ObservableCollection<Store> Stores
-        {
-            get => _stores;
-            set => Set(ref _stores, value);
-        }
-
-        private ObservableCollection<string> _uniqueStoreNames;
-        public ObservableCollection<string> UniqueStoreNames
-        {
-            get => _uniqueStoreNames;
-            set => Set(ref _uniqueStoreNames, value);
+            get => _selectedStore;
+            set => Set(ref _selectedStore, value);
         }
 
         private ICommand? _createStoreCommand;
         public ICommand CreateStoreCommand => _createStoreCommand ??= new LambdaCommandAsync(OnCreateStoreExecutedAsync, CanCreateStoreExecute);
 
         private bool CanCreateStoreExecute() =>
-            !string.IsNullOrWhiteSpace(StoreName) && !string.IsNullOrWhiteSpace(StoreAddress);
+            !string.IsNullOrWhiteSpace(SelectedStore.Name) && !string.IsNullOrWhiteSpace(SelectedStore.Address);
 
         private async Task OnCreateStoreExecutedAsync()
         {
-            // Приводим вводимые данные к нижнему регистру для сравнения
-            var storeNameLower = StoreName.ToLower().Trim();
-            var storeAddressLower = StoreAddress.ToLower().Trim();
-
-            // Проверяем, существует ли магазин с таким же именем и адресом
-            var duplicateStore = Stores.FirstOrDefault(
-                s => s.Name.ToLower() == storeNameLower &&
-                     s.Address.ToLower() == storeAddressLower
-            );
-
-            if (duplicateStore != null)
+            try
             {
-                _userDialog?.ShowWarning($"Магазин с именем '{StoreName}' и адресом '{StoreAddress}' уже существует.");
-                return;
+                // Используем Builder для создания нового магазина
+                var newStore = StoreBuilder.Create()
+                                           .SetName(SelectedStore.Name)
+                                           .SetAddress(SelectedStore.Address)
+                                           .Build();
+
+                // Сохраняем магазин в репозитории
+                await _storeRepository.AddAsync(newStore);
+
+                // Обновляем коллекцию магазинов в UI
+                //Stores.Add(newStore);
+
+                // Уведомляем пользователя об успешном создании
+                _userDialog.ShowInformation("Магазин успешно создан.");
+
+                // Закрываем диалог
+                _userDialog.Close();
+                SelectedStore = new StoreWrapper(new Store());
             }
-
-            // Создаём новый магазин
-            var newStore = new StoreBuilder()
-                .SetName(StoreName.Trim())
-                .SetAddress(StoreAddress.Trim())
-                .Build();
-
-            // Добавляем магазин в репозиторий
-            await _storeRepository.AddAsync(newStore);
-
-            // Добавляем уникальное имя в коллекцию
-            if (!UniqueStoreNames.Contains(newStore.Name))
+            catch (Exception ex)
             {
-                UniqueStoreNames.Add(newStore.Name);
+                // Логирование или отображение ошибки пользователю
+                _userDialog.ShowError($"Ошибка при создании магазина: {ex.Message}", "Ошибка");
             }
-
-            // Добавляем магазин в коллекцию для отображения
-            Stores.Add(newStore);
-
-            // Сбрасываем значения
-            StoreName = string.Empty;
-            StoreAddress = string.Empty;
-
-            // Сообщаем об успешном добавлении
-            _userDialog?.ShowInformation($"Магазин '{newStore.Name}' успешно создан!");
-            _userDialog?.Close();
-        }
-
-
-        private async Task LoadStoresAsync()
-        {
-            var stores = await _storeRepository.Items.ToListAsync();
-
-            Stores = new ObservableCollection<Store>(stores);
-            UniqueStoreNames = new ObservableCollection<string>(
-                stores.Select(s => s.Name).Distinct()
-            );
         }
     }
 }

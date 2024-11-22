@@ -35,6 +35,10 @@ namespace Shop.DAL.DataContext
                 .HasIndex(p => p.Name)
                 .IsUnique();
 
+            // Уникальный индекс для поля Code в Store
+            modelBuilder.Entity<Store>()
+                .HasIndex(s => s.Code)
+                .IsUnique(); // Добавляем уникальный индекс для поля Code
         }
     }
 }
