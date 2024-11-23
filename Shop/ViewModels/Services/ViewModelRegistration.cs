@@ -9,7 +9,7 @@ namespace Shop.ViewModels.Services
            .AddScoped<CreateStoreViewModel>()
            .AddScoped<CreateProductViewModel>()
            .AddScoped<StockProductViewModel>()
-           .AddScoped<SearchViewModel>()
+           .AddTransient<SearchViewModel>()
             ;
     }
 }
