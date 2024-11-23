@@ -7,6 +7,7 @@ using Shop.DAL.Repositories;
 using Shop.ViewModels.Wrappers;
 using Shop.Views.Windows;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -132,11 +133,19 @@ namespace Shop.ViewModels
             }
 
             // Если продукт не выбран, установим первый товар как выбранный
-            SelectedProduct = Products.FirstOrDefault();
+            //SelectedProduct = Products.FirstOrDefault();
         }
         #endregion
 
         public ObservableCollection<CartWrapper> CartItems { get; private set; } = new ObservableCollection<CartWrapper>();
+
+        private CartWrapper _selectedCart;
+        public CartWrapper SelectedCart
+        {
+            get => _selectedCart;
+            set => Set(ref _selectedCart, value);  // Устанавливаем значение, используя Set (предположительно это ViewModelBase)
+        }
+
 
         // Команда для добавления продукта в корзину
         // Команда для добавления товара в корзину
@@ -158,28 +167,47 @@ namespace Shop.ViewModels
                 var cartWrapper = new CartWrapper(cartItem, storeInventoryWrapper);
                 // Добавляем в корзину
                 CartItems.Add(cartWrapper);
+                // Уменьшаем количество в инвентаре
+                --storeInventoryWrapper.Quantity;
             }
-
-            // Уменьшаем количество в инвентаре
-            --storeInventoryWrapper.Quantity;
+            OnPropertyChanged(nameof(TotalCost));
         });
 
         // Команда для изменения количества
-        public ICommand UpdateQuantityCommand => new LambdaCommand<int>(UpdateQuantity);
+        public ICommand UpdateQuantityCommand => new LambdaCommand<CartWrapper>(UpdateQuantity);
 
         // Метод для изменения количества товара в корзине
         // Метод для изменения количества товара в корзине
-        private void UpdateQuantity(int quantity)
+        private void UpdateQuantity(CartWrapper cartItem)
         {
-            var cartWrapper = CartItems.FirstOrDefault(item => item.Quantity == quantity);
-            if (cartWrapper != null && cartWrapper.Quantity == 0)
-            {
-                // Если количество стало 0, удаляем товар из корзины
-                CartItems.Remove(cartWrapper);
-            }
+            if (cartItem == null) return;
 
-            // В противном случае просто обновляем количество товара
-            cartWrapper.Quantity = quantity;
+            // Ищем товар в корзине по ID продукта
+            // Ищем товар в Products по ID товара
+            var product = Products.FirstOrDefault(p => p.Product.Id == cartItem.Product.Id);
+
+            // Если товар найден в корзине
+            if (product != null)
+            {
+                product.Quantity += cartItem.Quantity;
+                CartItems.Remove(cartItem);
+            }
+            else
+            {
+                // Если товар не найден, можно вывести сообщение или выполнить другие действия
+                // Например, создать новый товар в корзине (если это требуется логикой приложения)
+                Console.WriteLine("Товар не найден в корзине");
+            }
+            OnPropertyChanged(nameof(TotalCost));
         }
+
+        public decimal TotalCost
+        {
+            get
+            {
+                return CartItems.Sum(cartWrapper => cartWrapper.TotalPrice);
+            }
+        }
+
     }
 }

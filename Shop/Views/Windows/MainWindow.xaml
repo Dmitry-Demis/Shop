@@ -51,7 +51,8 @@
           ItemsSource="{Binding Products}"
           AutoGenerateColumns="False"
           IsReadOnly="True"
-          Margin="5">
+          Margin="5"
+          SelectedItem="{Binding SelectedProduct}">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Имя" Binding="{Binding Product.Name}" Width="150" />
                 <DataGridTextColumn Header="Цена" Binding="{Binding Price}" Width="100" />
@@ -81,16 +82,19 @@
         <DataGrid Grid.Row="2" Grid.Column="1"
           ItemsSource="{Binding CartItems}" 
           AutoGenerateColumns="False" 
-          Margin="5">
+          Margin="5"
+          SelectedItem="{Binding SelectedCart}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Название товара" Binding="{Binding Product.Name}" Width="150"/>
-                <DataGridTextColumn Header="Цена за штуку" Binding="{Binding Price}" Width="100" />
+                <DataGridTextColumn Header="Название товара" Binding="{Binding Product.Name}" Width="150" IsReadOnly="true"/>
+                <DataGridTextColumn Header="Цена за штуку" Binding="{Binding Price}" Width="100"  IsReadOnly="true" />
                 <DataGridTextColumn Header="Количество" Binding="{Binding Quantity}" Width="100" />
-                <DataGridTextColumn Header="Общая цена" Binding="{Binding TotalPrice}" Width="100" />
+                <DataGridTextColumn Header="Общая цена" Binding="{Binding TotalPrice}" Width="100"  IsReadOnly="true"/>
             </DataGrid.Columns>
-            <!-- Привязка команды для изменения количества товара -->
             <DataGrid.InputBindings>
-                <KeyBinding Key="Enter" Command="{Binding UpdateQuantityCommand}" CommandParameter="{Binding Quantity}" />
+                <!-- Привязываем команду изменения количества -->
+                <MouseBinding Gesture="LeftDoubleClick" 
+                      Command="{Binding UpdateQuantityCommand}" 
+                      CommandParameter="{Binding SelectedCart}" />
             </DataGrid.InputBindings>
         </DataGrid>
 

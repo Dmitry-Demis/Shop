@@ -28,34 +28,41 @@ namespace Shop.ViewModels.Wrappers
             get => _cartItem.Quantity;
             set
             {
-                if (_cartItem.Quantity == value || value < 0) return;
-
-                // Если новое количество меньше текущего, увеличиваем количество на складе
+                if (value < 0) { return; }
+                // Проверяем, если новое количество меньше текущего (уменьшаем количество в корзине)
                 if (value < _cartItem.Quantity)
                 {
+                    // Восстанавливаем количество на складе
                     _storeInventoryWrapper.Quantity += _cartItem.Quantity - value;
                 }
-                else
+                // Если новое количество больше текущего (увеличиваем количество в корзине)
+                else if (value > _cartItem.Quantity)
                 {
-                    // Если новое количество больше текущего, проверяем, достаточно ли товара на складе
-                    if (_storeInventoryWrapper.Quantity >= value - _cartItem.Quantity)
+                    var requiredStock = value - _cartItem.Quantity;
+
+                    // Проверяем, достаточно ли товара на складе
+                    if (_storeInventoryWrapper.Quantity >= requiredStock)
                     {
-                        _storeInventoryWrapper.Quantity -= value - _cartItem.Quantity;
+                        // Уменьшаем количество товара на складе
+                        _storeInventoryWrapper.Quantity -= requiredStock;
                     }
                     else
                     {
-                        // Если на складе недостаточно товара, устанавливаем максимально возможное количество
+                        // Если на складе недостаточно товара, устанавливаем максимальное количество в корзине
                         value = _cartItem.Quantity + _storeInventoryWrapper.Quantity;
-                        _storeInventoryWrapper.Quantity = 0;  // Все товары из инвентаря списаны
+                        _storeInventoryWrapper.Quantity = 0; // Все товары из инвентаря списаны
                     }
                 }
 
                 // Обновляем количество в корзине
                 _cartItem.Quantity = value;
 
+                // Обновляем общую стоимость при изменении количества
                 OnPropertyChanged(nameof(Quantity));
-                OnPropertyChanged(nameof(TotalPrice)); // Обновляем общую стоимость при изменении количества
+                OnPropertyChanged(nameof(TotalPrice));
             }
+
+
         }
 
         public decimal TotalPrice => _cartItem.TotalPrice;
