@@ -260,11 +260,17 @@ namespace Shop.ViewModels
             }
 
             decimal remainingAmount = PurchaseAmount;
-            var selectedProducts = Products.ToList(); // Делаем копию списка продуктов
+            var selectedProducts = Products
+                .Where(p => p.Quantity > 0) // Отфильтровываем только товары, которые есть в наличии
+                .ToList(); // Делаем копию списка продуктов
+
+            // Сортируем товары по цене, чтобы пытаться купить более дешевые товары первыми
+            selectedProducts = selectedProducts.OrderBy(p => p.Price).ToList();
 
             var cartItems = new List<CartWrapper>();
+            bool addedProductThisRound;
 
-            // Инициализируем товары в корзине с количеством 0
+            // Добавляем товары в корзину с начальным количеством 0
             foreach (var productWrapper in selectedProducts)
             {
                 var product = productWrapper.Product;
@@ -276,33 +282,57 @@ namespace Shop.ViewModels
                 cartItems.Add(cartWrapper);
             }
 
-            bool addedProductThisRound = true;
+            // Фаза 1: Пытаемся добавить по одному товару до исчерпания бюджета
+            addedProductThisRound = true;
             while (remainingAmount > 0 && addedProductThisRound)
             {
                 addedProductThisRound = false;
 
-                // Добавляем товары по одному до исчерпания бюджета
                 foreach (var cartWrapper in cartItems)
                 {
-                    var product = cartWrapper.Product;
                     var price = cartWrapper.Price;
+                    var availableQuantity = cartWrapper.Product.StoreInventories
+                        .Sum(si => si.Quantity); // Суммируем количество по всем инвентарям товара
 
-                    // Считаем, сколько товара можно купить на оставшиеся деньги
-                    if (remainingAmount >= price && cartWrapper.Quantity < cartWrapper.Quantity)
+                    // Если есть деньги и товар в наличии, покупаем
+                    if (remainingAmount >= price && cartWrapper.Quantity < availableQuantity)
                     {
-                        // Увеличиваем количество товара в корзине
-                        cartWrapper.Quantity++;
-                        remainingAmount -= price;
-                        addedProductThisRound = true; // Как минимум один товар добавлен
+                        cartWrapper.Quantity++; // Увеличиваем количество товара в корзине
+                        remainingAmount -= price; // Уменьшаем оставшуюся сумму
+                        addedProductThisRound = true;
                     }
-
-                    // Прерываем, если деньги закончились
-                    if (remainingAmount <= 0)
-                        break;
                 }
             }
 
-            // Добавляем товары в коллекцию CartItems
+            // Фаза 2: Если деньги ещё остались, увеличиваем количество товаров на 2, 3 и так далее
+            while (remainingAmount > 0)
+            {
+                addedProductThisRound = false;
+
+                // Проверяем возможность покупки товаров по 2, 3 и так далее
+                foreach (var cartWrapper in cartItems)
+                {
+                    var price = cartWrapper.Price;
+                    var availableQuantity = cartWrapper.Product.StoreInventories
+                        .Sum(si => si.Quantity); // Суммируем количество по всем инвентарям товара
+                    var maxAffordableQuantity = (int)(remainingAmount / price);
+
+                    // Мы увеличиваем количество на минимальное количество, которое можем купить
+                    var quantityToAdd = Math.Min(maxAffordableQuantity, availableQuantity - cartWrapper.Quantity);
+
+                    if (quantityToAdd > 0)
+                    {
+                        cartWrapper.Quantity += quantityToAdd;
+                        remainingAmount -= quantityToAdd * price;
+                        addedProductThisRound = true;
+                    }
+                }
+
+                // Если мы не можем добавить ни одного товара, выходим из цикла
+                if (!addedProductThisRound) break;
+            }
+
+            // Обновляем корзину
             CartItems.Clear();
             foreach (var cartWrapper in cartItems)
             {
@@ -312,11 +342,32 @@ namespace Shop.ViewModels
                 }
             }
 
+            // Обновляем инвентари
+            foreach (var cartWrapper in cartItems)
+            {
+                if (cartWrapper.Quantity > 0)
+                {
+                    var totalQuantityToDeduct = cartWrapper.Quantity;
+                    foreach (var storeInventory in cartWrapper.Product.StoreInventories)
+                    {
+                        if (totalQuantityToDeduct <= 0) break;
+
+                        // Сколько можно забрать из текущего инвентаря
+                        var quantityInInventory = storeInventory.Quantity;
+                        var quantityToTake = Math.Min(totalQuantityToDeduct, quantityInInventory);
+
+                        // Уменьшаем количество товара в инвентаре
+                        storeInventory.Quantity -= quantityToTake;
+                        totalQuantityToDeduct -= quantityToTake;
+                    }
+                }
+            }
+
             // Обновляем UI
             OnPropertyChanged(nameof(CartItems));
             OnPropertyChanged(nameof(TotalCost));
-        }
 
+        }
 
     }
 }
