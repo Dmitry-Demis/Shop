@@ -73,7 +73,7 @@ namespace Shop.ViewModels
         public ICommand CreateStoreCommand => new LambdaCommand(() => OpenWindow<CreateStoreWindow>());
         public ICommand CreateProductCommand => new LambdaCommand(() => OpenWindow<CreateProductWindow>());
         public ICommand StockProductCommand => new LambdaCommand(() => OpenWindow<StockProductWindow>());
-
+        public ICommand CheapestStoreCommand => new LambdaCommand(() => OpenWindow<SearchWindow>());
         public ICommand AddToCartCommand => new LambdaCommand<StoreInventoryWrapper>(AddToCart);
         public ICommand UpdateQuantityCommand => new LambdaCommand<CartWrapper>(UpdateQuantity);
 
@@ -175,18 +175,36 @@ namespace Shop.ViewModels
             OnPropertyChanged(nameof(TotalCost));
         }
 
-        // Метод для оформления заказа
-        private void Checkout()
+        private async void Checkout()
         {
+            // Проверка на наличие товаров в корзине
+            if (CartItems.Count == 0)
+            {
+                MessageBox.Show("Ваша корзина пуста. Добавьте товары в корзину.");
+                return;
+            }
+
             // Показать сообщение о том, что заказ оформлен
             MessageBox.Show("Заказ оформлен!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            // Очистить корзину
+            // 1. Сохраняем обновления инвентарей в репозитории
+            foreach (var cartWrapper in CartItems)
+            {
+                if (cartWrapper.Quantity > 0)
+                {
+                    // Продукт уже имеет обновленный инвентарь
+                    await _productRepository.UpdateAsync(cartWrapper.Product);
+                }
+            }
+
+            // 2. Очистить корзину
             CartItems.Clear();
 
-            // Обновить UI (например, TotalCost автоматически обновится, так как коллекция пустая)
+            // 3. Обновить UI (например, TotalCost автоматически обновится, так как коллекция пустая)
             OnPropertyChanged(nameof(TotalCost));
         }
+
+
 
         private void SearchProduct()
         {
@@ -257,6 +275,21 @@ namespace Shop.ViewModels
             {
                 MessageBox.Show("Пожалуйста, введите корректную сумму.");
                 return;
+            }
+
+            // 1. Если корзина не пуста, возвращаем товары обратно в Products и очищаем корзину
+            if (CartItems.Count > 0)
+            {
+                foreach (var cartWrapper in CartItems)
+                {
+                    var productWrapper = Products.FirstOrDefault(p => p.Product.Id == cartWrapper.Product.Id);
+                    if (productWrapper != null)
+                    {
+                        productWrapper.Quantity += cartWrapper.Quantity; // Возвращаем товары обратно
+                    }
+                }
+
+                CartItems.Clear(); // Очищаем корзину
             }
 
             decimal remainingAmount = PurchaseAmount;
@@ -368,6 +401,7 @@ namespace Shop.ViewModels
             OnPropertyChanged(nameof(TotalCost));
 
         }
+
 
     }
 }

@@ -13,5 +13,8 @@ namespace Shop.ViewModels
 
         public StockProductViewModel StockProductViewModel
              => App.Services.GetRequiredService<StockProductViewModel>();
+
+        public SearchViewModel SearchViewModel
+     => App.Services.GetRequiredService<SearchViewModel>();
     }
 }

@@ -114,6 +114,7 @@
             <TextBlock Text="Купить на" VerticalAlignment="Center" Margin="5"/>
             <TextBox Text="{Binding PurchaseAmount}" Width="100" Margin="5" HorizontalAlignment="Right" VerticalAlignment="Center"/>
             <Button Content="Добавить в корзину" Command="{Binding PurchaseCommand}" Margin="5"/>
+            <Button Content="Найти партию товаров" Command="{Binding CheapestStoreCommand}" Margin="5"/>
         </StackPanel>
 
     </Grid>
