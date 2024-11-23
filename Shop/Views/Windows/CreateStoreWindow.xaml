@@ -3,6 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewmodels="clr-namespace:Shop.ViewModels"
+        d:DataContext="{d:DesignInstance Type=viewmodels:CreateStoreViewModel}"
         mc:Ignorable="d"
         DataContext="{Binding CreateStoreViewModel, Source={StaticResource Locator}}"
         Title="{Binding Title}" SizeToContent="Height" Width="400"
@@ -33,10 +35,12 @@
 
         <!-- Уникальный код магазина (только для чтения) -->
         <TextBlock Text="Уникальный код:" VerticalAlignment="Center" Margin="5" Grid.Row="2" Grid.Column="0"/>
-        <TextBlock Text="{Binding SelectedStore.Code}" Margin="5" Grid.Row="2" Grid.Column="1" IsHitTestVisible="False"/>
+        <TextBlock Text="{Binding SelectedStore.Code}" Margin="5" Grid.Row="2" Grid.Column="1" IsHitTestVisible="False"
+                   FontStyle="Italic"/>
 
         <!-- Кнопка для создания магазина -->
-        <Button Content="Создать Магазин" Command="{Binding CreateStoreCommand}" 
-                Margin="5" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"/>
+        <Button
+            Content="Создать Магазин" Command="{Binding CreateStoreCommand}" 
+            Margin="5" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"/>
     </Grid>
 </Window>

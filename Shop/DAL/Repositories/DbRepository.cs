@@ -77,6 +77,9 @@ namespace Shop.DAL.Repositories
             if (AutoSaveChanges)
                 await _db.SaveChangesAsync(Cancel).ConfigureAwait(false);
         }
+
+        public async Task<IEnumerable<T>?> GetAllAsync(CancellationToken cancel = default) => await _Set.ToListAsync(cancel).ConfigureAwait(false);
+
     }
 
 }

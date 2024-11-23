@@ -3,13 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Shop.Views.Windows"
+        xmlns:local="clr-namespace:Shop.Views.Windows" xmlns:viewmodels="clr-namespace:Shop.ViewModels"
+        d:DataContext="{d:DesignInstance Type=viewmodels:CreateProductViewModel}"
         mc:Ignorable="d"
         DataContext="{Binding CreateProductViewModel, Source={StaticResource Locator}}"
-        Title="{Binding Title}" Width="300"
-        SizeToContent="Height"
+        Title="{Binding Title}"
+        SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterOwner">
-
     <Grid>
         <!-- Определение сетки с двумя столбцами и несколькими строками -->
         <Grid.RowDefinitions>
@@ -23,8 +23,9 @@
 
         <!-- Название продукта -->
         <TextBlock Text="Название продукта:" VerticalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="0"/>
-        <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}" Margin="10" Grid.Row="0" Grid.Column="1"/>
+        <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}" Margin="10" Grid.Row="0" Grid.Column="1" Width="100"/>
         <!-- Кнопка создания продукта -->
-        <Button Content="Создать продукт" Command="{Binding CreateProductCommand}" Margin="10" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"/>
+        <Button
+            Content="Создать продукт" Command="{Binding CreateProductCommand}" Margin="10" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"/>
     </Grid>
 </Window>

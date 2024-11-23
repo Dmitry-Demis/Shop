@@ -114,6 +114,8 @@ namespace Shop.DAL.Repositories
                 csv.WriteRecords(items);
             }, Cancel).ConfigureAwait(false);
         }
+
+        public async Task<IEnumerable<T>?> GetAllAsync(CancellationToken cancel = default) => await ReadAllAsync(cancel).ConfigureAwait(false);
     }
 
 }

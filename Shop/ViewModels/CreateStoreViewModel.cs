@@ -14,19 +14,12 @@ using System.Windows.Input;
 namespace Shop.ViewModels
 {
 
-    public class CreateStoreViewModel : ViewModel
+    public class CreateStoreViewModel(
+        IRepository<Store> storeRepository,
+        IUserDialogService userDialog) : ViewModel
     {
-        private readonly IRepository<Store> _storeRepository;
-        private readonly IUserDialogService _userDialog;
-
-        public CreateStoreViewModel(
-            IRepository<Store> storeRepository,
-            IUserDialogService userDialog)
-        {
-            _storeRepository = storeRepository ?? throw new ArgumentNullException(nameof(storeRepository));
-            _userDialog = userDialog ?? throw new ArgumentNullException(nameof(userDialog));
-            SelectedStore = new StoreWrapper(new Store());
-        }
+        private readonly IRepository<Store> _storeRepository = storeRepository ?? throw new ArgumentNullException(nameof(storeRepository));
+        private readonly IUserDialogService _userDialog = userDialog ?? throw new ArgumentNullException(nameof(userDialog));
 
         // Свойства для привязки в UI
         private string _title = "Создать магазин";
@@ -35,8 +28,7 @@ namespace Shop.ViewModels
             get => _title;
             set => Set(ref _title, value);
         }
-
-        private StoreWrapper _selectedStore;
+        private StoreWrapper _selectedStore =  new(new Store());
         public StoreWrapper SelectedStore
         {
             get => _selectedStore;
@@ -70,7 +62,6 @@ namespace Shop.ViewModels
 
                 // Закрываем диалог
                 _userDialog.Close();
-                SelectedStore = new StoreWrapper(new Store());
             }
             catch (Exception ex)
             {

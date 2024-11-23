@@ -24,7 +24,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
             <!-- Column for main DataGrid (products) -->
-            <ColumnDefinition Width="462"/>
+            <ColumnDefinition/>
             <!-- Column for Cart DataGrid and Total -->
         </Grid.ColumnDefinitions>
 
@@ -37,6 +37,7 @@
             </MenuItem>
         </Menu>
 
+        <!-- ComboBox for selecting a store -->
         <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock Text="Магазин:" VerticalAlignment="Center" Margin="5"/>
             <ComboBox 
@@ -45,8 +46,8 @@
                   Margin="5" 
                   Width="200" />
         </StackPanel>
-        <!-- ComboBox for selecting a store -->
 
+        <!-- Main DataGrid for Products -->
         <DataGrid Grid.Row="2" Grid.Column="0"
           ItemsSource="{Binding Products}"
           AutoGenerateColumns="False"
@@ -62,7 +63,6 @@
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
                     <Style.Triggers>
-                        <!-- Проверка, если количество товара равно 0, строка становится неактивной -->
                         <DataTrigger Binding="{Binding IsAvailable}" Value="False">
                             <Setter Property="IsEnabled" Value="False"/>
                             <Setter Property="Background" Value="LightGray"/>
@@ -71,12 +71,10 @@
                 </Style>
             </DataGrid.RowStyle>
 
-            <!-- Привязка команды для двойного клика -->
             <DataGrid.InputBindings>
                 <MouseBinding Gesture="LeftDoubleClick" Command="{Binding AddToCartCommand}" CommandParameter="{Binding SelectedProduct}" />
             </DataGrid.InputBindings>
         </DataGrid>
-
 
         <!-- Cart DataGrid -->
         <DataGrid Grid.Row="2" Grid.Column="1"
@@ -98,18 +96,20 @@
             </DataGrid.InputBindings>
         </DataGrid>
 
-
-
         <!-- Total Cost and Action Buttons -->
         <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
             <TextBlock Text="Общая стоимость: " VerticalAlignment="Center" Margin="5"/>
             <TextBlock Text="{Binding TotalCost}" VerticalAlignment="Center" Margin="5" FontWeight="Bold"/>
             <Button Content="Оформить заказ" Command="{Binding CheckoutCommand}" Margin="5"/>
         </StackPanel>
+
+        <!-- Search Section -->
         <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="5">
             <TextBox Width="180" Height="25" Margin="5" Text="{Binding ProductSearch}"/>
             <Button Content="Поиск дешёвого" Command="{Binding SearchProductCommand}" Margin="5"/>
         </StackPanel>
+
+        <!-- Purchase Section -->
         <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
             <TextBlock Text="Купить на" VerticalAlignment="Center" Margin="5"/>
             <TextBox Text="{Binding PurchaseAmount}" Width="100" Margin="5" HorizontalAlignment="Right" VerticalAlignment="Center"/>

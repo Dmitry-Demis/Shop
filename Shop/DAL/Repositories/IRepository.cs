@@ -12,7 +12,9 @@ namespace Shop.DAL.Repositories
         , IEntity
         , new()
     {
+
         IQueryable<T> Items { get; }
+        Task<IEnumerable<T>?> GetAllAsync(CancellationToken cancel = default);
         Task<T?> GetAsync(int id, CancellationToken Cancel = default);
         Task<T> AddAsync(T item, CancellationToken Cancel = default);
         Task UpdateAsync(T item, CancellationToken Cancel = default);

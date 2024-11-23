@@ -30,7 +30,7 @@ namespace Shop.ViewModels
             _storeRepository = storeRepository ?? throw new ArgumentNullException(nameof(storeRepository));
             _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
 
-            LoadStores();
+            //LoadStores();
         }
 
         #region Properties
