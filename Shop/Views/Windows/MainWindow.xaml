@@ -47,32 +47,54 @@
         </StackPanel>
         <!-- ComboBox for selecting a store -->
 
-
-        <!-- Main DataGrid for products -->
         <DataGrid Grid.Row="2" Grid.Column="0"
-                  ItemsSource="{Binding Products}"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  Margin="5">
+          ItemsSource="{Binding Products}"
+          AutoGenerateColumns="False"
+          IsReadOnly="True"
+          Margin="5">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Имя" Binding="{Binding Product.Name}" Width="150" />
                 <DataGridTextColumn Header="Цена" Binding="{Binding Price}" Width="100" />
                 <DataGridTextColumn Header="К-во" Binding="{Binding Quantity}" Width="50" />
             </DataGrid.Columns>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <!-- Проверка, если количество товара равно 0, строка становится неактивной -->
+                        <DataTrigger Binding="{Binding IsAvailable}" Value="False">
+                            <Setter Property="IsEnabled" Value="False"/>
+                            <Setter Property="Background" Value="LightGray"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
+            <!-- Привязка команды для двойного клика -->
+            <DataGrid.InputBindings>
+                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding AddToCartCommand}" CommandParameter="{Binding SelectedProduct}" />
+            </DataGrid.InputBindings>
         </DataGrid>
+
 
         <!-- Cart DataGrid -->
         <DataGrid Grid.Row="2" Grid.Column="1"
-                  ItemsSource="{Binding CartItems}" 
-                  AutoGenerateColumns="False" 
-                  Margin="5">
+          ItemsSource="{Binding CartItems}" 
+          AutoGenerateColumns="False" 
+          Margin="5">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Название товара" Binding="{Binding ProductName}" Width="150" />
+                <DataGridTextColumn Header="Название товара" Binding="{Binding Product.Name}" Width="150"/>
                 <DataGridTextColumn Header="Цена за штуку" Binding="{Binding Price}" Width="100" />
                 <DataGridTextColumn Header="Количество" Binding="{Binding Quantity}" Width="100" />
                 <DataGridTextColumn Header="Общая цена" Binding="{Binding TotalPrice}" Width="100" />
             </DataGrid.Columns>
+            <!-- Привязка команды для изменения количества товара -->
+            <DataGrid.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding UpdateQuantityCommand}" CommandParameter="{Binding Quantity}" />
+            </DataGrid.InputBindings>
         </DataGrid>
+
+
 
         <!-- Total Cost and Action Buttons -->
         <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">

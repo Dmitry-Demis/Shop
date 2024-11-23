@@ -68,7 +68,17 @@ namespace Shop.ViewModels
             set
             {
                 Set(ref _selectedStore, value);
-                LoadProducts(value?.Id); // Загружаем продукты для выбранного магазина
+                LoadProducts(); // Загружаем продукты для выбранного магазина
+            }
+        }
+
+        private StoreInventoryWrapper _selectedProduct;
+        public StoreInventoryWrapper SelectedProduct
+        {
+            get => _selectedProduct;
+            set
+            {
+                Set(ref _selectedProduct, value);
             }
         }
 
@@ -79,28 +89,29 @@ namespace Shop.ViewModels
         // Загрузка магазинов из репозитория
         private async void LoadStores()
         {
-            var stores = await _storeRepository.Items.ToListAsync();
+            // Загружаем магазины с их инвентарём через Include()
+            var stores = await _storeRepository.Items
+                .Include(s => s.StoreInventories) // Включаем коллекцию StoreInventories
+                .ThenInclude(si => si.Product) // Включаем продукты, если нужно
+                .ToListAsync();
+
             Stores.Clear();
             foreach (var store in stores)
             {
                 Stores.Add(new StoreWrapper(store));
             }
 
-            // Устанавливаем первый магазин по умолчанию
+            // Устанавливаем первый магазин как выбранный
             SelectedStore = Stores.FirstOrDefault();
         }
 
-        private async void LoadProducts(int? storeId)
+        private void LoadProducts()
         {
-            if (storeId == null) return;
+            // Проверяем, выбран ли магазин
+            if (SelectedStore == null) return;
 
-            // Загружаем StoreInventories для выбранного магазина с информацией о продукте
-            var storeInventories = await _storeRepository.Items
-                .Where(s => s.Id == storeId)
-                .Include(s => s.StoreInventories)  // Включаем связанные StoreInventories
-                    .ThenInclude(si => si.Product)  // Включаем связанные продукты
-                .SelectMany(s => s.StoreInventories)
-                .ToListAsync();
+            // Загружаем все StoreInventories для выбранного магазина
+            var storeInventories = SelectedStore.StoreInventories;  // Доступ к StoreInventories через SelectedStore
 
             // Очистка списка продуктов
             Products.Clear();
@@ -116,14 +127,59 @@ namespace Shop.ViewModels
                     .SetPrice(storeInventory.Price)
                     .Build();
 
-
                 // Добавляем в список продуктов
                 Products.Add(new StoreInventoryWrapper(storeInventoryInstance));
             }
+
+            // Если продукт не выбран, установим первый товар как выбранный
+            SelectedProduct = Products.FirstOrDefault();
         }
-
-
-
         #endregion
+
+        public ObservableCollection<CartWrapper> CartItems { get; private set; } = new ObservableCollection<CartWrapper>();
+
+        // Команда для добавления продукта в корзину
+        // Команда для добавления товара в корзину
+        private ICommand? _addToCartCommand;
+        public ICommand AddToCartCommand => _addToCartCommand ??= new LambdaCommand<StoreInventoryWrapper>(storeInventoryWrapper => {
+
+            if (storeInventoryWrapper == null || storeInventoryWrapper.Quantity <= 0) return;
+            // Проверяем, есть ли уже этот товар в корзине
+            var existingItem = CartItems.FirstOrDefault(item => item.Product.Id == storeInventoryWrapper.Product.Id);
+            if (existingItem != null)
+            {
+                // Если товар уже в корзине, увеличиваем количество
+                ++existingItem.Quantity;
+            }
+            else
+            {
+                // Если товара нет в корзине, создаём новый элемент корзины
+                var cartItem = new CartItem(storeInventoryWrapper.Product.Unwrap(), storeInventoryWrapper.Price, 1);
+                var cartWrapper = new CartWrapper(cartItem, storeInventoryWrapper);
+                // Добавляем в корзину
+                CartItems.Add(cartWrapper);
+            }
+
+            // Уменьшаем количество в инвентаре
+            --storeInventoryWrapper.Quantity;
+        });
+
+        // Команда для изменения количества
+        public ICommand UpdateQuantityCommand => new LambdaCommand<int>(UpdateQuantity);
+
+        // Метод для изменения количества товара в корзине
+        // Метод для изменения количества товара в корзине
+        private void UpdateQuantity(int quantity)
+        {
+            var cartWrapper = CartItems.FirstOrDefault(item => item.Quantity == quantity);
+            if (cartWrapper != null && cartWrapper.Quantity == 0)
+            {
+                // Если количество стало 0, удаляем товар из корзины
+                CartItems.Remove(cartWrapper);
+            }
+
+            // В противном случае просто обновляем количество товара
+            cartWrapper.Quantity = quantity;
+        }
     }
 }

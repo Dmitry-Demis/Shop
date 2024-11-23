@@ -77,6 +77,6 @@ namespace Shop.ViewModels
                 // Логирование или отображение ошибки пользователю
                 _userDialog.ShowError($"Ошибка при создании магазина: {ex.Message}", "Ошибка");
             }
-        }
+        }        
     }
 }
