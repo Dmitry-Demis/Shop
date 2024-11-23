@@ -7,8 +7,8 @@ namespace Shop.ViewModels.Services
         public static IServiceCollection AddViewModels(this IServiceCollection services) => services
            .AddScoped<MainWindowViewModel>()
            .AddTransient<CreateStoreViewModel>()
-           .AddScoped<CreateProductViewModel>()
-           .AddScoped<StockProductViewModel>()
+           .AddTransient<CreateProductViewModel>()
+           .AddTransient<StockProductViewModel>()
            .AddTransient<SearchViewModel>()
             ;
     }

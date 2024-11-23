@@ -19,17 +19,19 @@
 
         public StoreInventoryBuilder SetQuantity(int quantity)
         {
-            if (quantity < 0)
+            _storeInventory.Quantity = 
+                quantity >= 0? 
+                quantity: 
                 throw new ArgumentException("Количество не может быть отрицательным.", nameof(quantity));
-            _storeInventory.Quantity = quantity;
             return this;
         }
 
         public StoreInventoryBuilder SetPrice(decimal price)
         {
-            if (price < 0)
+            _storeInventory.Price = 
+                price >= 0 ? 
+                price : 
                 throw new ArgumentException("Цена не может быть отрицательной.", nameof(price));
-            _storeInventory.Price = price;
             return this;
         }
 

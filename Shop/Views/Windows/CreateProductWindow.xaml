@@ -23,8 +23,12 @@
 
         <!-- Название продукта -->
         <TextBlock Text="Название продукта:" VerticalAlignment="Center" Margin="10" Grid.Row="0" Grid.Column="0"/>
-        <TextBox Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}" Margin="10" Grid.Row="0" Grid.Column="1" Width="100"/>
-        <!-- Кнопка создания продукта -->
+        <TextBox Text="{Binding SelectedProduct.Name, UpdateSourceTrigger=PropertyChanged}" Margin="10" Grid.Row="0" Grid.Column="1" Width="100">
+            <TextBox.InputBindings>
+                <KeyBinding Gesture="Enter" Command="{Binding CreateProductCommand}" CommandParameter="{Binding SelectedProduct}" />
+            </TextBox.InputBindings>
+        </TextBox>
+            <!-- Кнопка создания продукта -->
         <Button
             Content="Создать продукт" Command="{Binding CreateProductCommand}" Margin="10" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"/>
     </Grid>

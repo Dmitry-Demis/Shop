@@ -1,8 +1,10 @@
 ﻿namespace Shop.DAL.Models.Builders
 {
-    public class ProductBuilder
+    public class ProductBuilder : IBuilder<Product>
     {
-        private readonly Product _product = new() { StoreInventories = [] };
+        private readonly Product _product = new();
+
+        public static ProductBuilder Create() => new();
 
         public ProductBuilder SetName(string name)
         {

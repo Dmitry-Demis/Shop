@@ -1,90 +1,66 @@
 ﻿using MathCore.ViewModels;
 using MathCore.WPF.Commands;
-using Microsoft.EntityFrameworkCore;
 using Shop.DAL.Models;
 using Shop.DAL.Models.Builders;
 using Shop.DAL.Repositories;
 using Shop.ViewModels.Services;
-using System.Collections.ObjectModel;
+using Shop.ViewModels.Wrappers;
 using System.Windows.Input;
 
 namespace Shop.ViewModels
 {
-    public class CreateProductViewModel(IRepository<Product> productRepository, IUserDialogService userDialog) : ViewModel
+    public class CreateProductViewModel(
+         IRepository<Product> productRepository,
+         IUserDialogService userDialog
+     ) : ViewModel
     {
-        private string _Title = "Создать товар";
-        public string Title
+        // Primary Constructor для управления зависимостями
+        private IRepository<Product> ProductRepository { get; } = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+        private IUserDialogService UserDialog { get; } = userDialog ?? throw new ArgumentNullException(nameof(userDialog));
+
+        // Свойства для привязки в UI
+        public string Title { get; set; } = "Создать продукт";
+
+        private ProductWrapper _selectedProduct = new(new Product());
+        public ProductWrapper SelectedProduct
         {
-            get => _Title;
-            set => Set(ref _Title, value);
-        }
-        // Проперти для данных нового магазина
-        private string _productName = null!;
-        public string ProductName
-        {
-            get => _productName;
-            set => Set(ref _productName, value);
+            get => _selectedProduct;
+            set => Set(ref _selectedProduct, value);
         }
 
-        // Команда для создания товара
         private ICommand? _createProductCommand;
         public ICommand CreateProductCommand => _createProductCommand ??= new LambdaCommandAsync(OnCreateProductExecutedAsync, CanCreateProductExecute);
 
-        private async Task<Product?> FindExistingProductAsync(string normalisedProductName)
-        {
-            // Загружаем все продукты
-            var products = await productRepository.Items.ToListAsync();
-
-            // Асинхронно перебираем продукты
-            foreach (var product in products)
-            {
-                // Сравниваем имена продуктов
-                if (product.Name.Trim().ToLower() == normalisedProductName)
-                {
-                    return product; // Возвращаем найденный продукт
-                }
-
-                // Используем await внутри цикла, если нужны дополнительные асинхронные действия
-                await Task.Yield(); // Имитация асинхронной работы
-            }
-
-            return null; // Продукт не найден
-        }
+        private bool CanCreateProductExecute() =>
+            !string.IsNullOrWhiteSpace(SelectedProduct.Name);
 
         private async Task OnCreateProductExecutedAsync()
         {
-            var normalisedProductName = ProductName.Trim().ToLower();
-
-            // Ищем существующий продукт
-            var existingProduct = await FindExistingProductAsync(normalisedProductName);
-
-            if (existingProduct != null)
-            {
-                userDialog?.ShowInformation($"Товар \"{ProductName}\" уже существует");
-                return;
-            }
-
-            // Создаём новый продукт
-            var newProduct = new ProductBuilder()
-                .SetName(ProductName.Trim())
-                .Build();
-
             try
             {
-                // Сохраняем новый продукт
-                await productRepository.AddAsync(newProduct);
+                // Проверка на существующий продукт
+                var existingProduct = (await ProductRepository.GetAllAsync())
+                    ?.FirstOrDefault(p => p.Name.ToLower() == SelectedProduct.Name.ToLower());
 
-                ProductName = string.Empty;
-                userDialog?.ShowInformation($"Товар \"{normalisedProductName}\" успешно добавлен");
-                userDialog?.Close();
+                if (existingProduct is not null)
+                {
+                    UserDialog.ShowWarning($@"Продукт с названием ""{SelectedProduct.Name}"" уже существует.");
+                    return;
+                }
+
+                // Создание нового продукта
+                var newProduct = ProductBuilder.Create()
+                                               .SetName(SelectedProduct.Name)
+                                               .Build();
+
+                await ProductRepository.AddAsync(newProduct);
+                UserDialog.ShowInformation($"Продукт \"{newProduct.Name}\" успешно создан.");
+                UserDialog.Close();
             }
             catch (Exception ex)
             {
-                userDialog?.ShowError($"Ошибка при добавлении товара: {ex.Message}");
+                UserDialog.ShowError($"Ошибка при создании продукта: {ex.Message}");
             }
         }
-
-        private bool CanCreateProductExecute() => !string.IsNullOrWhiteSpace(ProductName); // Товар можно создать, если название не пустое
     }
-
 }

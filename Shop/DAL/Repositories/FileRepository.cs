@@ -11,27 +11,16 @@ using Shop.DAL.Models;
 
 namespace Shop.DAL.Repositories
 {
-    public class FileRepository<T> : IRepository<T>
+    public class FileRepository<T>(string filePath) : IRepository<T>
         where T : class, IEntity, new()
     {
-        private readonly string _filePath;
-        private readonly CsvConfiguration _csvConfig;
-
-        public FileRepository(string filePath)
+        private readonly string _filePath = filePath ?? throw new ArgumentException("File path must not be null or empty.", nameof(filePath));
+        private readonly CsvConfiguration _csvConfig = new(CultureInfo.InvariantCulture)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
-                throw new ArgumentException("File path must not be null or empty.", nameof(filePath));
-
-            _filePath = filePath;
-
-            // Настройка для CsvHelper
-            _csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                HasHeaderRecord = true,
-                IgnoreBlankLines = true,
-                TrimOptions = TrimOptions.Trim
-            };
-        }
+            HasHeaderRecord = true,
+            IgnoreBlankLines = true,
+            TrimOptions = TrimOptions.Trim
+        };
 
         public IQueryable<T> Items
         {
@@ -58,12 +47,18 @@ namespace Shop.DAL.Repositories
             ArgumentNullException.ThrowIfNull(item);
 
             var items = await ReadAllAsync(Cancel).ConfigureAwait(false);
+
+            // Определяем максимальный существующий ID и назначаем новый ID
+            var newId = items.Count != 0 ? items.Max(existing => existing.Id) + 1 : 1;
+            item.Id = newId;
+
             items.Add(item);
 
             await WriteAllAsync(items, Cancel).ConfigureAwait(false);
 
             return item;
         }
+
 
         public async Task UpdateAsync(T item, CancellationToken Cancel = default)
         {

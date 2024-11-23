@@ -5,30 +5,23 @@ using Shop.DAL.Models.Builders;
 using Shop.DAL.Repositories;
 using Shop.ViewModels.Services;
 using Shop.ViewModels.Wrappers;
-using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace Shop.ViewModels
 {
-
     public class CreateStoreViewModel(
-        IRepository<Store> storeRepository,
-        IUserDialogService userDialog) : ViewModel
+    IRepository<Store> storeRepository,
+    IUserDialogService userDialog
+) : ViewModel
     {
-        private readonly IRepository<Store> _storeRepository = storeRepository ?? throw new ArgumentNullException(nameof(storeRepository));
-        private readonly IUserDialogService _userDialog = userDialog ?? throw new ArgumentNullException(nameof(userDialog));
+        // Primary Constructor, без необходимости в явных полях
+        private IRepository<Store> StoreRepository { get; } = storeRepository ?? throw new ArgumentNullException(nameof(storeRepository));
+        private IUserDialogService UserDialog { get; } = userDialog ?? throw new ArgumentNullException(nameof(userDialog));
 
         // Свойства для привязки в UI
-        private string _title = "Создать магазин";
-        public string Title
-        {
-            get => _title;
-            set => Set(ref _title, value);
-        }
-        private StoreWrapper _selectedStore =  new(new Store());
+        public string Title { get; set; } = "Создать магазин";
+
+        private StoreWrapper _selectedStore = new(new Store());
         public StoreWrapper SelectedStore
         {
             get => _selectedStore;
@@ -45,29 +38,20 @@ namespace Shop.ViewModels
         {
             try
             {
-                // Используем Builder для создания нового магазина
                 var newStore = StoreBuilder.Create()
                                            .SetName(SelectedStore.Name)
                                            .SetAddress(SelectedStore.Address)
-                                           .Build();
+                                           .Build()
+                                           ;
 
-                // Сохраняем магазин в репозитории
-                await _storeRepository.AddAsync(newStore);
-
-                // Обновляем коллекцию магазинов в UI
-                //Stores.Add(newStore);
-
-                // Уведомляем пользователя об успешном создании
-                _userDialog.ShowInformation("Магазин успешно создан.");
-
-                // Закрываем диалог
-                _userDialog.Close();
+                await StoreRepository.AddAsync(newStore);
+                UserDialog.ShowInformation("Магазин успешно создан.");
+                UserDialog.Close();
             }
             catch (Exception ex)
             {
-                // Логирование или отображение ошибки пользователю
-                _userDialog.ShowError($"Ошибка при создании магазина: {ex.Message}", "Ошибка");
+                UserDialog.ShowError($"Ошибка при создании магазина: {ex.Message}", "Ошибка");
             }
-        }        
+        }
     }
 }

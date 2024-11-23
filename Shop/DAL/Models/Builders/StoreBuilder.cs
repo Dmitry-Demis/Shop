@@ -4,7 +4,7 @@
     {
         private readonly Store _store = new();
         // Статический метод для удобного создания нового билдера
-        public static StoreBuilder Create() => new StoreBuilder();
+        public static StoreBuilder Create() => new();
 
         // Метод для установки имени магазина
         public StoreBuilder SetName(string name)
