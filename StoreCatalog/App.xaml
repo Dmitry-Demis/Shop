@@ -1,0 +1,16 @@
+﻿<Application x:Class="StoreCatalogPresentation.App"
+              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:vmRegistration="clr-namespace:StoreCatalogPresentation.ViewModels.Services.VMRegistration"
+                StartupUri="Views/Windows/MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--<ResourceDictionary Source="Themes/Core.xaml"/>-->
+                <ResourceDictionary Source="Themes/Brushes.xaml"/>
+                <ResourceDictionary Source="Themes/Core2.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <vmRegistration:ViewModelLocator x:Key="Locator"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

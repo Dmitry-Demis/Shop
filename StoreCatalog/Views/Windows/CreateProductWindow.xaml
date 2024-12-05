@@ -1,0 +1,58 @@
+﻿<Window x:Class="StoreCatalogPresentation.Views.Windows.CreateProductWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewmodels="clr-namespace:StoreCatalogPresentation.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:CreateProductViewModel}"
+        mc:Ignorable="d"
+        DataContext="{Binding CreateProductViewModel, Source={StaticResource Locator}}"
+        Title="{Binding Title}" SizeToContent="Height" Width="400"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Выбор магазина -->
+        <TextBlock Text="Магазин:" VerticalAlignment="Center" Margin="5" Grid.Row="0" Grid.Column="0"/>
+        <ComboBox ItemsSource="{Binding Stores}" 
+               SelectedItem="{Binding SelectedStore, UpdateSourceTrigger=PropertyChanged}" 
+               Margin="5" Grid.Row="0" Grid.Column="1" />
+
+        <!-- Выбор товара (с автодополнением) -->
+        <TextBlock Text="Товар:" VerticalAlignment="Center" Margin="5" Grid.Row="1" Grid.Column="0"/>
+        <ComboBox 
+         ItemsSource="{Binding FilteredProducts}" 
+         SelectedItem="{Binding SelectedProduct, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+         DisplayMemberPath="Name"
+         TextSearch.TextPath="Name"
+         IsEditable="True"
+         IsTextSearchEnabled="True"
+         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+         Margin="5" Grid.Row="1" Grid.Column="1"/>
+
+        <!-- Количество -->
+        <TextBlock Text="Количество:" VerticalAlignment="Center" Margin="5" Grid.Row="2" Grid.Column="0"/>
+        <TextBox Text="{Binding SelectedProduct.Quantity, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+              Margin="5" Grid.Row="2" Grid.Column="1" />
+
+        <!-- Цена -->
+        <TextBlock Text="Цена:" VerticalAlignment="Center" Margin="5" Grid.Row="3" Grid.Column="0"/>
+        <TextBox Text="{Binding SelectedProduct.Price, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, StringFormat={}{0:F2}}" 
+              Margin="5" Grid.Row="3" Grid.Column="1" />
+
+        <!-- Кнопка для добавления товара -->
+        <Button Content="Добавить товар"
+             Command="{Binding AddNewProductCommand}" 
+             Margin="5" Grid.Row="4" Grid.Column="1" />
+    </Grid>
+</Window>

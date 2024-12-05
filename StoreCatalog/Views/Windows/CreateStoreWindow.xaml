@@ -1,0 +1,46 @@
+﻿<Window x:Class="StoreCatalogPresentation.Views.Windows.CreateStoreWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:StoreCatalogPresentation.ViewModels"
+        d:DataContext="{d:DesignInstance Type=viewModels:CreateStoreViewModel}"
+        mc:Ignorable="d"
+        DataContext="{Binding CreateStoreViewModel, Source={StaticResource Locator}}"
+        Title="{Binding Title}" SizeToContent="Height" Width="400"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="10">
+        <!-- Определяем три строки и два столбца -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Название магазина -->
+        <TextBlock Text="Название Магазина:" VerticalAlignment="Center" Margin="5" Grid.Row="0" Grid.Column="0"/>
+
+        <!-- Текстовое поле для названия магазина (только для чтения) -->
+        <TextBox Text="{Binding SelectedStore.Name, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Margin="5" Grid.Row="0" Grid.Column="1"/>
+
+        <!-- Адрес магазина -->
+        <TextBlock Text="Адрес Магазина:" VerticalAlignment="Center" Margin="5" Grid.Row="1" Grid.Column="0"/>
+        <TextBox Text="{Binding SelectedStore.Address, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+             Margin="5" Grid.Row="1" Grid.Column="1"/>
+
+        <!-- Уникальный код магазина (только для чтения) -->
+        <TextBlock Text="Уникальный код:" VerticalAlignment="Center" Margin="5" Grid.Row="2" Grid.Column="0"/>
+        <TextBlock Text="{Binding SelectedStore.Code}" Margin="5" Grid.Row="2" Grid.Column="1" IsHitTestVisible="False"
+               FontStyle="Italic"/>
+
+        <!-- Кнопка для создания магазина -->
+        <Button
+        Content="Создать Магазин" Command="{Binding CreateStoreCommand}" 
+        Margin="5" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"/>
+    </Grid>
+</Window>

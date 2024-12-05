@@ -1,0 +1,67 @@
+﻿<Window x:Class="StoreCatalogPresentation.Views.Windows.PurchaseWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:StoreCatalogPresentation.ViewModels"
+        d:DataContext="{d:DesignInstance Type=viewModels:PurchaseViewModel}"
+        mc:Ignorable="d"
+        Title="{Binding Title}"
+        Height="450"
+        DataContext="{Binding PurchaseViewModel, Source={StaticResource Locator}}"
+        Width="400"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Заголовок -->
+        <TextBlock Text="Введите количество товаров для покупки:"
+                   VerticalAlignment="Center"
+                   Margin="10"
+                   Grid.Row="0"
+                   Grid.Column="0"
+                   Grid.ColumnSpan="2"/>
+
+        <DataGrid Grid.ColumnSpan="2"
+                  Grid.Column="0"
+                  Grid.Row="1"
+                  RowStyle="{DynamicResource DataGridRowStyle1}"
+                  ColumnHeaderStyle="{DynamicResource DataGridColumnHeaderStyle1}"
+                  CellStyle="{DynamicResource DataGridCellStyle1}"
+                  Style="{DynamicResource DataGridStyle1}"
+                  ItemsSource="{Binding PurchaseItems}">
+
+            <DataGrid.Columns>
+                <!-- Колонка с названием товара -->
+                <DataGridTextColumn Header="Товар"
+                                    Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                    Width="*"
+                                    IsReadOnly="True"/>
+
+                <DataGridTextColumn Header="Количество"
+                                    Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                    Width="*"/>
+
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Кнопка для покупки -->
+        <Button Content="Купить партию товаров" 
+                Command="{Binding PurchaseCommand}" 
+                Margin="10" 
+                Grid.Row="2" 
+                Grid.Column="0" 
+                Grid.ColumnSpan="2" 
+                HorizontalAlignment="Center" 
+                IsEnabled="{Binding PurchaseCommand}"/>
+    </Grid>
+</Window>
